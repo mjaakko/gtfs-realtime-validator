@@ -17,7 +17,9 @@
 
 package edu.usf.cutr.gtfsrtvalidator.lib.validation;
 
+import edu.usf.cutr.gtfsrtvalidator.lib.util.CalendarUtils;
 import edu.usf.cutr.gtfsrtvalidator.lib.util.TimestampUtils;
+import edu.usf.cutr.gtfsrtvalidator.lib.util.TripIdCache;
 import org.locationtech.spatial4j.context.jts.JtsSpatialContext;
 import org.locationtech.spatial4j.distance.DistanceUtils;
 import org.locationtech.spatial4j.shape.Rectangle;
@@ -86,6 +88,9 @@ public class GtfsMetadata {
 
     // A map of trips that visit a stop more than once, where the key is the trip_id and the value is a list of the stops visited more than once
     private Map<String, List<String>> mTripsWithMultiStops = new HashMap<>();
+
+    // Cache for mapping combination route id, start date, start time and direction id to trip id
+    private TripIdCache mTripIdCache;
 
     /**
      * Builds the metadata for a particular GTFS feed
@@ -249,6 +254,11 @@ public class GtfsMetadata {
             }
         }
 
+        /**
+         * Setup cache for trip ids
+         */
+        mTripIdCache = new TripIdCache(mTrips.values(), mTripStopTimes, new CalendarUtils(gtfsData));
+
         TimestampUtils.logDuration(_log, "Built GtfsMetadata for " + feedUrl + " in ", startTime);
     }
 
@@ -402,5 +412,14 @@ public class GtfsMetadata {
      */
     public Map<String, List<String>> getTripsWithMultiStops() {
         return mTripsWithMultiStops;
+    }
+
+    /**
+     * Returns trip id cache
+     *
+     * @return trip id cache
+     */
+    public TripIdCache getTripIdCache() {
+        return mTripIdCache;
     }
 }
