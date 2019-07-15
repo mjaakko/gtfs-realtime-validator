@@ -23,6 +23,7 @@ import edu.usf.cutr.gtfsrtvalidator.lib.model.OccurrenceModel;
 import edu.usf.cutr.gtfsrtvalidator.lib.model.helper.ErrorListHelperModel;
 import edu.usf.cutr.gtfsrtvalidator.lib.util.GtfsUtils;
 import edu.usf.cutr.gtfsrtvalidator.lib.util.RuleUtils;
+import edu.usf.cutr.gtfsrtvalidator.lib.util.TripIdCache;
 import edu.usf.cutr.gtfsrtvalidator.lib.validation.GtfsMetadata;
 import edu.usf.cutr.gtfsrtvalidator.lib.validation.interfaces.FeedEntityValidator;
 import org.apache.commons.lang3.StringUtils;
@@ -200,11 +201,16 @@ public class VehicleValidator implements FeedEntityValidator {
     private void checkE029(List<GtfsRealtime.FeedEntity> entityList, GtfsRealtime.FeedEntity entity, GtfsMetadata gtfsMetadata, List<OccurrenceModel> errors) {
         GtfsRealtime.VehiclePosition v = entity.getVehicle();
 
-        // If the vehicle doesn't have a trip_id, we can't check E029 - return
-        if (!v.hasTrip() || !v.getTrip().hasTripId()) {
+        // If the vehicle doesn't have a trip_id or fields required to uniquely identify the trip, we can't check E029 - return
+        if (!v.hasTrip() || !(v.getTrip().hasTripId() || (v.getTrip().hasRouteId() && v.getTrip().hasStartDate() && v.getTrip().hasStartTime()))) {
             return;
         }
-        String tripId = v.getTrip().getTripId();
+        String tripId = v.getTrip().hasTripId() ?
+                            v.getTrip().getTripId() :
+                            gtfsMetadata.getTripIdCache().findTripId(v.getTrip().getRouteId(), v.getTrip().getStartDate(), v.getTrip().getStartTime(), v.getTrip().hasDirectionId() ? String.valueOf(v.getTrip().getDirectionId()) : null);
+        if (tripId == null) {
+            return;
+        }
         String routeId = null;
         if (v.getTrip().hasRouteId()) {
             routeId = v.getTrip().getRouteId();
