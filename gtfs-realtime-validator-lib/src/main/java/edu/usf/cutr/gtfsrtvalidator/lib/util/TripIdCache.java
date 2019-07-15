@@ -16,7 +16,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 public class TripIdCache {
-    private Map<String, String> tripIdCache = new HashMap<>();
+    private Map<String, Optional<String>> tripIdCache = new HashMap<>();
 
     private Collection<Trip> trips;
     private Map<String, List<StopTime>> tripStopTimes;
@@ -56,11 +56,11 @@ public class TripIdCache {
             }).collect(Collectors.toList());
 
             if (possibleTrips.size() == 1) {
-                return possibleTrips.get(0).getId().getId();
+                return Optional.of(possibleTrips.get(0).getId().getId());
             } else {
-                return possibleTrips.stream().filter(trip -> Objects.equals(trip.getDirectionId(), directionId)).findAny().map(trip -> trip.getId().getId()).orElse(null);
+                return possibleTrips.stream().filter(trip -> Objects.equals(trip.getDirectionId(), directionId)).findAny().map(trip -> trip.getId().getId());
             }
-        });
+        }).orElse(null);
     }
 
     private boolean doesTripStartAt(String tripId, String startTime) {
